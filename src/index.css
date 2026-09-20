@@ -1,93 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
-@import 'tailwindcss';
+@import "tailwindcss";
 
-html,
-body,
-#root {
-  height: 100%;
-  font-family: 'Inter', sans-serif;
-  background-color: #f8fafc;
-}
-
-@theme inline {
-  --font-sans: 'Inter', sans-serif;
-  --font-heading: 'Outfit', sans-serif;
-  --font-serif: 'Noto Serif', serif;
-  --font-mono: 'JetBrains Mono', monospace;
-
-  /* Custom Animations */
-  --animate-fade-in: fade-in 0.3s ease-out;
-  --animate-slide-up: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@theme {
+  --color-primary: #1F3864;
+  --color-secondary: #2E7D32;
+  --color-alert: #C55A11;
+  --color-neutral-bg: #F2F2F2;
+  --color-body-text: #595959;
   
-  @keyframes fade-in {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+  --font-sans: 'Inter', 'Calibri', sans-serif;
+  --font-heading: 'Poppins', 'Calibri', sans-serif;
+  
+  --animate-blob: blob 7s infinite;
+  
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
   }
-  @keyframes slide-up {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
+}
+
+@utility animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+@utility animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+@layer base {
+  body {
+    @apply bg-neutral-bg text-body-text font-sans antialiased;
+    margin: 0;
+    min-height: 100vh;
   }
 
-  /* Keep existing colors */
-  --color-navy-950: #0a0f1e;
-  --color-navy-900: #0d1526;
-  --color-navy-800: #142040;
-  --color-navy-700: #1e3060;
-  --color-navy-600: #2a4580;
-  --color-navy-500: #3a5fa0;
-  --color-navy-400: #5a7ec0;
-  --color-navy-300: #8aaad8;
-  --color-navy-200: #bed0ec;
-  --color-navy-100: #e8eef8;
-  --color-navy-50: #f5f7fc;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold text-gray-900;
+  }
 
-  --color-saffron-600: #b35000;
-  --color-saffron-500: #e06000;
-  --color-saffron-400: #f07820;
-  --color-saffron-300: #f59840;
-  --color-saffron-200: #fac080;
-  --color-saffron-100: #fde8c8;
-  --color-saffron-50: #fff5e8;
+  /* Custom elegant thin scrollbar for standard containers */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5); /* gray-400 */
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(107, 114, 128, 0.8); /* gray-500 */
+  }
 
-  --color-emerald-700: #065f46;
-  --color-emerald-600: #059669;
-  --color-emerald-500: #10b981;
-  --color-emerald-100: #d1fae5;
-
-  --color-amber-600: #d97706;
-  --color-amber-500: #f59e0b;
-  --color-amber-100: #fef3c7;
-
-  --color-rose-600: #e11d48;
-  --color-rose-500: #f43f5e;
-  --color-rose-100: #ffe4e6;
+  /* Utility for hiding scrollbar while allowing scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
 }
-
-/* Glassmorphism Utilities */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-.glass-dark {
-  background: rgba(13, 21, 38, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Global scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(90,126,192,0.3) transparent;
-}
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(90,126,192,0.3); border-radius: 2px; }
-
-/* Font utilities */
-.font-serif { font-family: 'Noto Serif', serif; }
-.font-mono { font-family: 'JetBrains Mono', monospace; }
-.font-heading { font-family: 'Outfit', sans-serif; }
