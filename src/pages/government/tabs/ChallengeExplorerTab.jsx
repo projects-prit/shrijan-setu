@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, MapPin, List, Eye, X } from 'lucide-react';
+import { Search, Filter, MapPin, List, Eye, X, AlertTriangle } from 'lucide-react';
 import { mockChallenges } from '../govtMockData';
 
 export default function ChallengeExplorerTab() {

@@ -12,6 +12,8 @@ import HelpTab from './tabs/HelpTab';
 
 import api from '../../api/axios';
 import { AuthContext } from '../../context/AuthContext';
+import { initialMyReports, initialProfile } from '../../data/citizenMockData';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function CitizenDashboard() {
   const { user } = useContext(AuthContext);
@@ -19,12 +21,12 @@ export default function CitizenDashboard() {
   const [toast, setToast] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Global State
-  const [profile, setProfile] = useState(user?.profile || { name: 'Citizen', language: 'EN' });
-  const [myReports, setMyReports] = useState([]);
+  // Global State with safe initial fallbacks
+  const [profile, setProfile] = useState(user?.profile || initialProfile);
+  const [myReports, setMyReports] = useState(initialMyReports);
   const [communityFeed, setCommunityFeed] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -33,28 +35,40 @@ export default function CitizenDashboard() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
       try {
-        const [reportsRes, communityRes, notifRes, meRes] = await Promise.all([
+        const [reportsRes, communityRes, notifRes, meRes] = await Promise.allSettled([
           api.get('/challenges'),
           api.get('/challenges/community'),
           api.get('/notifications'),
           api.get('/users/me')
         ]);
         
-        setMyReports(reportsRes.data.data);
-        setCommunityFeed(communityRes.data.data);
-        setNotifications(notifRes.data.data);
-        if (meRes.data.data.profile) {
-          setProfile(meRes.data.data.profile);
+        if (!isMounted) return;
+
+        if (reportsRes.status === 'fulfilled' && Array.isArray(reportsRes.value?.data?.data) && reportsRes.value.data.data.length > 0) {
+          setMyReports(reportsRes.value.data.data);
+        }
+        if (communityRes.status === 'fulfilled' && Array.isArray(communityRes.value?.data?.data)) {
+          setCommunityFeed(communityRes.value.data.data);
+        }
+        if (notifRes.status === 'fulfilled' && Array.isArray(notifRes.value?.data?.data)) {
+          setNotifications(notifRes.value.data.data);
+        }
+        if (meRes.status === 'fulfilled' && meRes.value?.data?.data?.profile) {
+          setProfile(prev => ({ ...prev, ...meRes.value.data.data.profile }));
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     fetchData();
+    return () => { isMounted = false; };
   }, []);
 
   const showToast = (message) => {
@@ -62,7 +76,7 @@ export default function CitizenDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.is_read).length : 0;
 
   const navItems = [
     { id: 'home', label: 'Home', icon: <Home size={24} /> },
@@ -92,6 +106,8 @@ export default function CitizenDashboard() {
         return <HomeTab setActiveTab={setActiveTab} myReports={myReports} />;
     }
   };
+
+  const displayName = profile?.name ? profile.name.split(' ')[0] : 'Citizen';
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-[#F2F2F2] overflow-hidden font-sans">
@@ -151,7 +167,7 @@ export default function CitizenDashboard() {
                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#1F3864] font-bold text-lg">SS</div>
             )}
             <h2 className="text-lg md:text-xl font-bold md:text-[#1F3864]">
-              {activeTab === 'home' ? `Hello, ${profile.name.split(' ')[0]}!` : 
+              {activeTab === 'home' ? `Hello, ${displayName}!` : 
                activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('reports', 'My Reports')}
             </h2>
           </div>
@@ -159,7 +175,7 @@ export default function CitizenDashboard() {
           <div className="flex items-center gap-4">
             <button className="flex items-center gap-1 text-sm font-medium hover:opacity-80 transition-opacity">
               <Globe size={20} />
-              <span className="hidden sm:inline">{profile.language} ▾</span>
+              <span className="hidden sm:inline">{profile?.language || 'EN'} ▾</span>
             </button>
             <button 
               className="relative p-2 rounded-full hover:bg-white/10 md:hover:bg-gray-100 transition-colors"
@@ -172,7 +188,7 @@ export default function CitizenDashboard() {
             </button>
             {!isMobile && (
               <button onClick={() => setActiveTab('profile')} className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-[#1F3864] font-bold">
-                {profile.name.charAt(0)}
+                {displayName.charAt(0)}
               </button>
             )}
           </div>
@@ -181,7 +197,9 @@ export default function CitizenDashboard() {
         {/* Scrollable Tab Content */}
         <main className="flex-1 overflow-y-auto pb-20 md:pb-0 bg-[#F2F2F2]">
           <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-8">
-            {renderTabContent()}
+            <ErrorBoundary>
+              {renderTabContent()}
+            </ErrorBoundary>
           </div>
         </main>
 

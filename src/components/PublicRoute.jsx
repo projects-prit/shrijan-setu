@@ -14,7 +14,7 @@ const PublicRoute = () => {
     );
   }
 
-  // If user is already logged in, redirect them to their respective dashboard
+  // If user is already logged in, redirect them away from Login pages to their respective dashboard
   if (user) {
     switch (user.role) {
       case 'citizen':
@@ -29,8 +29,7 @@ const PublicRoute = () => {
       case 'admin':
         return <Navigate to="/admin" replace />;
       default:
-        // Fallback for unknown roles
-        return <Navigate to="/" replace />;
+        return <Outlet />;
     }
   }
 

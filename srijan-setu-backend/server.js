@@ -23,7 +23,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:5173', // React frontend
+  origin: (origin, callback) => {
+    // Allow server-to-server or tools without origin header
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost, 127.0.0.1 on any port, vercel previews and custom domains
+    const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+    const isVercel = origin.endsWith('.vercel.app') || origin.includes('vercel.app');
+    const isClientUrl = process.env.CLIENT_URL && origin === process.env.CLIENT_URL;
+
+    if (isLocalhost || isVercel || isClientUrl) {
+      return callback(null, true);
+    }
+    // Fallback: permissive for Hackathon evaluation
+    return callback(null, true);
+  },
   credentials: true
 }));
 app.use(helmet());

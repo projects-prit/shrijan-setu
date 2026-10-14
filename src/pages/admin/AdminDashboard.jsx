@@ -19,6 +19,7 @@ import AIMonitoringTab from './tabs/AIMonitoringTab';
 import SystemSettingsTab from './tabs/SystemSettingsTab';
 import SecurityLogsTab from './tabs/SecurityLogsTab';
 import AdminProfileTab from './tabs/AdminProfileTab';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function AdminDashboard() {
   const { logout } = useContext(AuthContext);
@@ -186,7 +187,9 @@ export default function AdminDashboard() {
 
         <main className="flex-1 overflow-y-auto p-6 bg-[#F2F2F2]">
           <div className="max-w-7xl mx-auto">
-            {renderTabContent()}
+            <ErrorBoundary>
+              {renderTabContent()}
+            </ErrorBoundary>
           </div>
         </main>
       </div>

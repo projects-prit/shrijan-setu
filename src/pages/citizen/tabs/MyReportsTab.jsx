@@ -1,46 +1,62 @@
 import React, { useState } from 'react';
 import { Search, MapPin, ChevronRight, X, Droplets, BookOpen, Truck, Leaf, Zap, Star } from 'lucide-react';
 
-export default function MyReportsTab({ myReports, setMyReports, showToast }) {
+export default function MyReportsTab({ myReports = [], setMyReports, showToast }) {
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
 
-  const filteredReports = myReports.filter(r => {
-    const trackingId = r.tracking_id || r.id;
-    const matchesSearch = r.title.toLowerCase().includes(searchTerm.toLowerCase()) || trackingId.toLowerCase().includes(searchTerm.toLowerCase());
+  const safeReports = Array.isArray(myReports) ? myReports : [];
+
+  const filteredReports = safeReports.filter(r => {
+    if (!r) return false;
+    const trackingId = String(r.tracking_id || r.id || r._id || '');
+    const title = String(r.title || '');
+    const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) || trackingId.toLowerCase().includes(searchTerm.toLowerCase());
+    const status = String(r.status || '').toLowerCase();
+    
     if (filter === 'All') return matchesSearch;
-    if (filter === 'Resolved') return matchesSearch && r.status === 'deployed';
-    return matchesSearch && r.status !== 'deployed';
+    if (filter === 'Resolved') return matchesSearch && status === 'deployed';
+    return matchesSearch && status !== 'deployed';
   });
 
   const getCategoryIcon = (category) => {
     switch(category) {
-      case 'Water Issue': return <Droplets size={20} className="text-blue-500" />;
-      case 'Education': return <BookOpen size={20} className="text-purple-500" />;
-      case 'Road/Infrastructure': return <Truck size={20} className="text-gray-500" />;
+      case 'Water Issue':
+      case 'Water Resources': return <Droplets size={20} className="text-blue-500" />;
+      case 'Education':
+      case 'Smart Education': return <BookOpen size={20} className="text-purple-500" />;
+      case 'Road/Infrastructure':
+      case 'Infrastructure': return <Truck size={20} className="text-gray-500" />;
       case 'Environment': return <Leaf size={20} className="text-green-500" />;
       default: return <Zap size={20} className="text-orange-500" />;
     }
   };
 
   const statusList = ['submitted', 'matched', 'prototype', 'testing', 'pilot', 'deployed'];
-  const statusLabels = ['Submitted', 'Matched', 'Prototype', 'Testing', 'Pilot', 'Deployed'];
-  
-  const getStatusIndex = (status) => statusList.indexOf(status?.toLowerCase() || 'submitted');
+
+  const getStatusIndex = (status) => {
+    const s = String(status || 'submitted').toLowerCase();
+    const idx = statusList.indexOf(s);
+    return idx >= 0 ? idx : 0;
+  };
 
   const handleSubmitRating = () => {
-    if (rating === 0) return showToast('Please select a star rating.');
+    if (rating === 0) return showToast ? showToast('Please select a star rating.') : null;
     
-    setMyReports(myReports.map(r => {
-      if (r.id === selectedReport.id) {
-        return { ...r, rating, feedback };
-      }
-      return r;
-    }));
-    showToast('Thank you for your feedback!');
+    if (setMyReports) {
+      setMyReports(safeReports.map(r => {
+        const reportKey = r._id || r.id;
+        const selectedKey = selectedReport._id || selectedReport.id;
+        if (reportKey && reportKey === selectedKey) {
+          return { ...r, rating, feedback };
+        }
+        return r;
+      }));
+    }
+    if (showToast) showToast('Thank you for your feedback!');
     setSelectedReport(null);
     setRating(0);
     setFeedback('');
@@ -81,11 +97,15 @@ export default function MyReportsTab({ myReports, setMyReports, showToast }) {
                 <p className="text-gray-500 text-lg">No reports match your search.</p>
               </div>
             ) : (
-              filteredReports.map(report => {
+              filteredReports.map((report, idx) => {
                 const currentStageIdx = getStatusIndex(report.status);
+                const trackingId = report.tracking_id || report.id || report._id || `JH-${idx + 1}`;
+                const key = report._id || report.id || trackingId;
+                const isDeployed = String(report.status || '').toLowerCase() === 'deployed';
+
                 return (
                   <div 
-                    key={report.id} 
+                    key={key} 
                     onClick={() => setSelectedReport(report)}
                     className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 active:scale-[0.98] transition-transform cursor-pointer"
                   >
@@ -95,23 +115,23 @@ export default function MyReportsTab({ myReports, setMyReports, showToast }) {
                           {getCategoryIcon(report.category)}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-gray-400">{report.tracking_id || report.id}</p>
+                          <p className="text-xs font-bold text-gray-400">{trackingId}</p>
                           <p className="text-xs text-gray-500">
-                            {report.created_at ? new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : report.submittedDate}
+                            {report.created_at ? new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : (report.submittedDate || 'Recent')}
                           </p>
                         </div>
                       </div>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full capitalize ${report.status === 'deployed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                        {report.status}
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full capitalize ${isDeployed ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {report.status || 'Submitted'}
                       </span>
                     </div>
                     
-                    <h3 className="font-bold text-gray-900 text-lg leading-tight mb-3 line-clamp-2">{report.title}</h3>
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight mb-3 line-clamp-2">{report.title || 'Civic Issue'}</h3>
                     
                     {/* Progress Bar (Mini) */}
                     <div className="flex gap-1 mb-1">
                       {statusList.map((s, i) => (
-                        <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= currentStageIdx ? (report.status === 'deployed' ? 'bg-[#2E7D32]' : 'bg-[#1F3864]') : 'bg-gray-100'}`}></div>
+                        <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= currentStageIdx ? (isDeployed ? 'bg-[#2E7D32]' : 'bg-[#1F3864]') : 'bg-gray-100'}`}></div>
                       ))}
                     </div>
                   </div>
@@ -127,9 +147,11 @@ export default function MyReportsTab({ myReports, setMyReports, showToast }) {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fade-in-up">
           <div className="p-4 border-b border-gray-100 flex justify-between items-start bg-gray-50">
             <div>
-              <p className="text-sm font-bold text-gray-500">{selectedReport.tracking_id || selectedReport.id}</p>
+              <p className="text-sm font-bold text-gray-500">{selectedReport.tracking_id || selectedReport.id || selectedReport._id}</p>
               <h2 className="text-xl font-bold text-[#1F3864] leading-tight mt-1">{selectedReport.title}</h2>
-              <p className="text-sm text-gray-600 mt-2 flex items-center gap-1"><MapPin size={16}/> {selectedReport.location}</p>
+              <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                <MapPin size={16}/> {selectedReport.district || selectedReport.location || 'Jharkhand'}
+              </p>
             </div>
             <button 
               onClick={() => { setSelectedReport(null); setRating(0); setFeedback(''); }} 
@@ -158,38 +180,40 @@ export default function MyReportsTab({ myReports, setMyReports, showToast }) {
                     <div key={step} className="flex flex-col items-center">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-1 transition-colors ${
                         isCompleted ? 'bg-[#2E7D32] text-white shadow-md' : 'bg-gray-100 text-gray-400 border-2 border-gray-200'
-                      } ${isCurrent && selectedReport.status !== 'deployed' ? 'ring-4 ring-green-100 animate-pulse' : ''}`}>
+                      } ${isCurrent && String(selectedReport.status).toLowerCase() !== 'deployed' ? 'ring-4 ring-green-100 animate-pulse' : ''}`}>
                         {isCompleted ? <CheckCircle2 size={16} /> : idx + 1}
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="text-center mt-2 font-bold text-[#2E7D32] capitalize">{selectedReport.status}</div>
+              <div className="text-center mt-2 font-bold text-[#2E7D32] capitalize">{selectedReport.status || 'Submitted'}</div>
             </div>
 
             {/* Timeline */}
             <h3 className="text-lg font-bold text-gray-900 mb-4">Timeline</h3>
             <div className="space-y-4 mb-6">
-              {selectedReport.timeline ? [...selectedReport.timeline].reverse().map((event, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="w-3 h-3 rounded-full bg-[#1F3864] mt-1.5"></div>
-                    {idx !== selectedReport.timeline.length - 1 && <div className="w-px h-full bg-gray-200 my-1"></div>}
+              {Array.isArray(selectedReport.timeline) && selectedReport.timeline.length > 0 ? (
+                [...selectedReport.timeline].reverse().map((event, idx) => (
+                  <div key={idx} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-[#1F3864] mt-1.5"></div>
+                      {idx !== selectedReport.timeline.length - 1 && <div className="w-px h-full bg-gray-200 my-1"></div>}
+                    </div>
+                    <div className="pb-4">
+                      <p className="text-base font-bold text-gray-900">{event.status}</p>
+                      <p className="text-sm text-gray-700 mt-1">{event.note}</p>
+                      <p className="text-xs text-gray-400 mt-1">{event.date}</p>
+                    </div>
                   </div>
-                  <div className="pb-4">
-                    <p className="text-base font-bold text-gray-900">{event.status}</p>
-                    <p className="text-sm text-gray-700 mt-1">{event.note}</p>
-                    <p className="text-xs text-gray-400 mt-1">{event.date}</p>
-                  </div>
-                </div>
-              )) : (
-                <div className="text-gray-500 text-sm italic">Detailed timeline will be available once a project starts.</div>
+                ))
+              ) : (
+                <div className="text-gray-500 text-sm italic">Challenge submitted. Detailed milestone updates will appear as student teams begin prototyping.</div>
               )}
             </div>
 
-            {/* Rating Box (Only if Deployed and not yet rated) */}
-            {selectedReport.status === 'Deployed' && selectedReport.rating === undefined && (
+            {/* Rating Box */}
+            {String(selectedReport.status).toLowerCase() === 'deployed' && selectedReport.rating === undefined && (
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mt-4">
                 <h3 className="font-bold text-[#1F3864] text-lg text-center mb-2">Rate this solution</h3>
                 <p className="text-sm text-blue-800 text-center mb-4">Are you satisfied with how this was resolved?</p>
@@ -240,7 +264,6 @@ export default function MyReportsTab({ myReports, setMyReports, showToast }) {
   );
 }
 
-// Dummy check circle for timeline
 function CheckCircle2(props) {
   return (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>

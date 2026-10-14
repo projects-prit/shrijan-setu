@@ -8,7 +8,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center bg-gray-50">
         <Loader2 size={48} className="animate-spin text-[#1F3864]" />
       </div>
     );
@@ -21,8 +21,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
   // Check if user role is in the allowedRoles array (if provided)
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // If not authorized, maybe redirect to a generic unauthorized page or their specific dashboard
-    return <Navigate to="/" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <Outlet />;

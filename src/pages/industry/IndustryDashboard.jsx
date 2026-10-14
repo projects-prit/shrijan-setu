@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   LayoutDashboard, Search, Handshake, IndianRupee, Users, 
   LineChart, Bell, Settings, HelpCircle, Menu, X, Globe, User, LogOut 
@@ -16,13 +16,17 @@ import ProfileTab from './tabs/ProfileTab';
 import HelpTab from './tabs/HelpTab';
 
 import { 
+  initialDiscoverProjects,
+  initialCollaborations,
   initialFunding, 
-  initialMentorships 
+  initialMentorships,
+  initialIndustryNotifications,
+  initialIndustryProfile
 } from '../../data/industryMockData';
 
 import api from '../../api/axios';
 import { AuthContext } from '../../context/AuthContext';
-import { useContext, useEffect } from 'react';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function IndustryDashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -31,44 +35,58 @@ export default function IndustryDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Global State
-  const [projects, setProjects] = useState([]);
-  const [collaborations, setCollaborations] = useState([]);
+  // Global State with safe initial mock fallbacks
+  const [projects, setProjects] = useState(initialDiscoverProjects);
+  const [collaborations, setCollaborations] = useState(initialCollaborations);
   const [funding, setFunding] = useState(initialFunding);
   const [mentorships, setMentorships] = useState(initialMentorships);
-  const [notifications, setNotifications] = useState([]);
-  const [profile, setProfile] = useState(user?.profile || { orgName: 'Industry Partner' });
-  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState(initialIndustryNotifications);
+  const [profile, setProfile] = useState(user?.profile || initialIndustryProfile);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
       try {
-        const [prjRes, colRes, notifRes, meRes] = await Promise.all([
+        const [prjRes, colRes, notifRes, meRes] = await Promise.allSettled([
           api.get('/projects'),
           api.get('/collaborations'),
           api.get('/notifications'),
           api.get('/users/me')
         ]);
         
-        setProjects(prjRes.data.data);
-        setCollaborations(colRes.data.data);
-        setNotifications(notifRes.data.data);
-        if (meRes.data.data.profile) {
-          setProfile(meRes.data.data.profile);
+        if (!isMounted) return;
+
+        if (prjRes.status === 'fulfilled' && Array.isArray(prjRes.value?.data?.data) && prjRes.value.data.data.length > 0) {
+          setProjects(prjRes.value.data.data);
+        }
+        if (colRes.status === 'fulfilled' && Array.isArray(colRes.value?.data?.data) && colRes.value.data.data.length > 0) {
+          setCollaborations(colRes.value.data.data);
+        }
+        if (notifRes.status === 'fulfilled' && Array.isArray(notifRes.value?.data?.data) && notifRes.value.data.data.length > 0) {
+          setNotifications(notifRes.value.data.data);
+        }
+        if (meRes.status === 'fulfilled' && meRes.value?.data?.data?.profile) {
+          setProfile(prev => ({ ...prev, ...meRes.value.data.data.profile }));
         }
       } catch (err) {
         console.error('Error fetching Industry dashboard data:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     fetchData();
+    return () => { isMounted = false; };
   }, []);
 
   const showToast = (message) => {
     setToast(message);
     setTimeout(() => setToast(null), 3000);
   };
+
+  const unreadNotifs = Array.isArray(notifications) ? notifications.filter(n => !n.read && !n.is_read).length : 0;
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
@@ -77,7 +95,7 @@ export default function IndustryDashboard() {
     { id: 'funding', label: 'Funding & Resources', icon: <IndianRupee size={20} /> },
     { id: 'mentorship', label: 'Mentorship Hub', icon: <Users size={20} /> },
     { id: 'analytics', label: 'Impact & Analytics', icon: <LineChart size={20} /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell size={20} />, badge: notifications.filter(n => !n.is_read).length },
+    { id: 'notifications', label: 'Notifications', icon: <Bell size={20} />, badge: unreadNotifs },
     { id: 'profile', label: 'Profile & Settings', icon: <Settings size={20} /> },
     { id: 'help', label: 'Help / Resources', icon: <HelpCircle size={20} /> },
   ];
@@ -114,6 +132,8 @@ export default function IndustryDashboard() {
     }
   };
 
+  const orgName = profile?.orgName || profile?.name || 'Tata Steel Foundation';
+
   return (
     <div className="flex h-screen bg-[#F2F2F2] overflow-hidden">
       
@@ -141,7 +161,7 @@ export default function IndustryDashboard() {
         
         <div className="flex-1 overflow-y-auto py-4">
           <div className="px-4 mb-4">
-             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Industry Portal</p>
+             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Industry & CSR Portal</p>
           </div>
           <nav className="space-y-1 px-2">
             {navItems.map((item) => (
@@ -193,14 +213,14 @@ export default function IndustryDashboard() {
               <Menu size={24} />
             </button>
             <h2 className="text-xl font-bold text-[#1F3864] hidden sm:block">
-              {profile.orgName}
+              {orgName}
             </h2>
           </div>
 
           <div className="flex items-center gap-4 sm:gap-6">
             <button className="text-gray-500 hover:text-[#1F3864] transition-colors relative" onClick={() => setActiveTab('notifications')}>
               <Bell size={22} />
-              {notifications.filter(n => !n.is_read).length > 0 && (
+              {unreadNotifs > 0 && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#C55A11] rounded-full"></span>
               )}
             </button>
@@ -210,7 +230,7 @@ export default function IndustryDashboard() {
               <span>EN ▾</span>
             </button>
             <button className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-[#1F3864]" onClick={() => setActiveTab('profile')}>
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[#1F3864] font-bold">
                 <User size={18} />
               </div>
             </button>
@@ -220,7 +240,9 @@ export default function IndustryDashboard() {
         {/* Tab Content Area */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
-            {renderTabContent()}
+            <ErrorBoundary>
+              {renderTabContent()}
+            </ErrorBoundary>
           </div>
         </main>
       </div>

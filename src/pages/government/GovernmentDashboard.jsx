@@ -20,6 +20,7 @@ import HelpResourcesTab from './tabs/HelpResourcesTab';
 
 import { mockNotifications } from './govtMockData';
 import { AuthContext } from '../../context/AuthContext';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function GovernmentDashboard() {
   const { logout } = useContext(AuthContext);
@@ -167,7 +168,9 @@ export default function GovernmentDashboard() {
         {/* Tab Content Area */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
-            {renderTabContent()}
+            <ErrorBoundary>
+              {renderTabContent()}
+            </ErrorBoundary>
           </div>
         </main>
       </div>

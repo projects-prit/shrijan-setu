@@ -1,17 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Mail, Lock, Loader2, AlertCircle, ArrowLeft, Users, Building2, Briefcase, Landmark } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, ArrowLeft, Users, Building2, Briefcase, Landmark, Shield, Sparkles } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const { role } = useParams();
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-  const { role } = useParams();
 
   const getRoleConfig = () => {
     switch(role) {
@@ -20,6 +15,7 @@ export default function Login() {
           title: 'Citizen Portal',
           subtitle: 'Report a local challenge',
           color: 'from-blue-600 to-blue-800',
+          defaultEmail: 'citizen@srijansetu.in',
           icon: <Users size={48} className="text-white/80" />
         };
       case 'hei': 
@@ -27,6 +23,7 @@ export default function Login() {
           title: 'University Dashboard',
           subtitle: 'Review & build solutions',
           color: 'from-indigo-600 to-indigo-900',
+          defaultEmail: 'hei@srijansetu.in',
           icon: <Building2 size={48} className="text-white/80" />
         };
       case 'industry': 
@@ -34,6 +31,7 @@ export default function Login() {
           title: 'Industry / CSR',
           subtitle: 'Support & mentor projects',
           color: 'from-orange-600 to-orange-800',
+          defaultEmail: 'industry@srijansetu.in',
           icon: <Briefcase size={48} className="text-white/80" />
         };
       case 'government': 
@@ -41,19 +39,33 @@ export default function Login() {
           title: 'Government Dashboard',
           subtitle: 'Monitor impact & progress',
           color: 'from-emerald-700 to-emerald-900',
+          defaultEmail: 'gov@srijansetu.in',
           icon: <Landmark size={48} className="text-white/80" />
+        };
+      case 'admin':
+        return {
+          title: 'Admin Operations',
+          subtitle: 'Platform oversight & governance',
+          color: 'from-slate-800 to-slate-950',
+          defaultEmail: 'admin@srijansetu.in',
+          icon: <Shield size={48} className="text-white/80" />
         };
       default: 
         return {
           title: 'Srijan Setu',
-          subtitle: 'Sign in to continue',
+          subtitle: 'Sign in to your portal',
           color: 'from-[#1F3864] to-[#152746]',
+          defaultEmail: '',
           icon: <div className="text-4xl font-bold text-white/80 tracking-tighter">SS</div>
         };
     }
   };
 
   const config = getRoleConfig();
+  const [email, setEmail] = useState(config.defaultEmail || '');
+  const [password, setPassword] = useState(config.defaultEmail ? 'password123' : '');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -64,14 +76,14 @@ export default function Login() {
       const user = await login(email, password);
       
       // Enforce correct role if specified in URL
-      if (role && role !== 'citizen' && role !== 'industry' && role !== 'government' && role !== 'hei') {
-        // Just let them pass if they are logging into a generic page
+      if (role && role !== 'citizen' && role !== 'industry' && role !== 'government' && role !== 'hei' && role !== 'admin') {
+        // Generic login page
       } else if (role) {
          let userRoleForUrl = user.role;
          if (user.role === 'hei_coordinator' || user.role === 'hei_member') userRoleForUrl = 'hei';
          
          if (userRoleForUrl !== role) {
-           throw new Error(`This login page is restricted to ${config.title} accounts.`);
+           throw new Error(`This login page is restricted to ${config.title} accounts. Your account has the role "${user.role}".`);
          }
       }
 
@@ -90,12 +102,14 @@ export default function Login() {
     }
   };
 
-  // Pre-fill helpers for demo purposes
+  // Pre-fill helpers for demo evaluation
   const prefill = (demoRole) => {
-    if (demoRole === 'citizen') { setEmail('ramesh@example.com'); setPassword('password123'); }
-    if (demoRole === 'hei') { setEmail('dean@coep.edu'); setPassword('password123'); }
-    if (demoRole === 'industry') { setEmail('csr@tata.com'); setPassword('password123'); }
-    if (demoRole === 'gov') { setEmail('admin@pune.gov.in'); setPassword('password123'); }
+    setError('');
+    if (demoRole === 'citizen') { setEmail('citizen@srijansetu.in'); setPassword('password123'); }
+    if (demoRole === 'hei') { setEmail('hei@srijansetu.in'); setPassword('password123'); }
+    if (demoRole === 'industry') { setEmail('industry@srijansetu.in'); setPassword('password123'); }
+    if (demoRole === 'gov') { setEmail('gov@srijansetu.in'); setPassword('password123'); }
+    if (demoRole === 'admin') { setEmail('admin@srijansetu.in'); setPassword('password123'); }
   };
 
   return (
@@ -108,7 +122,7 @@ export default function Login() {
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-black/10 rounded-full blur-3xl"></div>
         
         <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center text-white/80 hover:text-white transition-colors mb-12">
+          <Link to="/" className="inline-flex items-center text-white/80 hover:text-white transition-colors mb-12 font-medium">
             <ArrowLeft size={20} className="mr-2" /> Back to Home
           </Link>
           
@@ -125,28 +139,73 @@ export default function Login() {
         </div>
 
         <div className="relative z-10 text-white/60 text-sm">
-          &copy; 2026 Srijan Setu. All rights reserved.
+          &copy; 2026 Srijan Setu - Smart India Hackathon.
         </div>
       </div>
 
       {/* Right Pane - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
-        <Link to="/" className="absolute top-8 left-8 lg:hidden inline-flex items-center text-gray-500 hover:text-gray-900 transition-colors">
+        <Link to="/" className="absolute top-8 left-8 lg:hidden inline-flex items-center text-gray-500 hover:text-gray-900 transition-colors font-medium">
           <ArrowLeft size={20} className="mr-2" /> Back
         </Link>
         
         <div className="w-full max-w-md">
           <div className="lg:hidden text-center mb-10">
             <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${config.color} mb-4 shadow-lg text-white`}>
-              {React.cloneElement(config.icon, { size: 32 })}
+              {React.isValidElement(config.icon) && config.icon.props?.size ? React.cloneElement(config.icon, { size: 32 }) : config.icon}
             </div>
             <h2 className="text-3xl font-bold text-gray-900">{config.title}</h2>
             <p className="text-gray-500 mt-2">{config.subtitle}</p>
           </div>
 
-          <div className="hidden lg:block mb-10">
+          <div className="hidden lg:block mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Sign in</h2>
-            <p className="text-gray-500 mt-2">Enter your credentials to access your account</p>
+            <p className="text-gray-500 mt-2">Enter your credentials to access your portal</p>
+          </div>
+
+          {/* Quick Demo Pre-fill Pill Bar */}
+          <div className="mb-6 bg-blue-50/70 border border-blue-100 rounded-2xl p-3.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#1F3864] mb-2 uppercase tracking-wider">
+              <Sparkles size={14} className="text-[#C55A11]" />
+              <span>1-Click Demo Login</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button 
+                type="button"
+                onClick={() => prefill('citizen')}
+                className="px-2.5 py-1 text-xs font-semibold bg-white text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors shadow-2xs"
+              >
+                Citizen
+              </button>
+              <button 
+                type="button"
+                onClick={() => prefill('hei')}
+                className="px-2.5 py-1 text-xs font-semibold bg-white text-indigo-700 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-2xs"
+              >
+                University (HEI)
+              </button>
+              <button 
+                type="button"
+                onClick={() => prefill('industry')}
+                className="px-2.5 py-1 text-xs font-semibold bg-white text-orange-700 rounded-lg border border-orange-200 hover:bg-orange-100 transition-colors shadow-2xs"
+              >
+                Industry/CSR
+              </button>
+              <button 
+                type="button"
+                onClick={() => prefill('gov')}
+                className="px-2.5 py-1 text-xs font-semibold bg-white text-emerald-700 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-2xs"
+              >
+                Government
+              </button>
+              <button 
+                type="button"
+                onClick={() => prefill('admin')}
+                className="px-2.5 py-1 text-xs font-semibold bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors shadow-2xs"
+              >
+                Admin
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -156,7 +215,7 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
               <div className="relative group">
@@ -165,7 +224,7 @@ export default function Login() {
                   type="email" 
                   required
                   className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-[#1F3864] outline-none transition-all shadow-sm"
-                  placeholder="Enter your email"
+                  placeholder="name@srijansetu.in"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -175,7 +234,7 @@ export default function Login() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-semibold text-gray-700">Password</label>
-                <a href="#" className="text-sm font-medium text-[#1F3864] hover:underline">Forgot password?</a>
+                <span className="text-xs text-gray-400 font-mono">Demo: password123</span>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1F3864] transition-colors" size={20} />
@@ -199,7 +258,9 @@ export default function Login() {
             </button>
           </form>
 
-
+          <div className="mt-8 text-center text-xs text-gray-400">
+            Having trouble? All portals use <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">password123</code> for prototype demo.
+          </div>
         </div>
       </div>
     </div>

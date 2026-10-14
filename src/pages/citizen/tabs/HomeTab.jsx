@@ -1,14 +1,21 @@
 import React from 'react';
-import { PlusCircle, FileText, CheckCircle, MapPin, ChevronRight, Activity } from 'lucide-react';
+import { PlusCircle, FileText, CheckCircle, ChevronRight, Activity } from 'lucide-react';
 
-export default function HomeTab({ setActiveTab, myReports }) {
-  const reportedCount = myReports.length;
-  const inProgressCount = myReports.filter(r => r.status !== 'Deployed').length;
-  const resolvedCount = myReports.filter(r => r.status === 'Deployed').length;
+export default function HomeTab({ setActiveTab, myReports = [] }) {
+  const safeReports = Array.isArray(myReports) ? myReports : [];
+  const reportedCount = safeReports.length;
+  const inProgressCount = safeReports.filter(r => {
+    const s = (r?.status || '').toLowerCase();
+    return s !== 'deployed';
+  }).length;
+  const resolvedCount = safeReports.filter(r => {
+    const s = (r?.status || '').toLowerCase();
+    return s === 'deployed';
+  }).length;
 
   const recentFixes = [
-    { title: "Streetlight repaired in Ward 4", partner: "IIT Bombay" },
-    { title: "Water pump fixed at primary school", partner: "COEP Pune" },
+    { title: "Smart Hand-Pump Sensor Network deployed in Khunti", partner: "BIT Mesra" },
+    { title: "Solar Micro-grid installed for rural primary school", partner: "NIT Jamshedpur" },
   ];
 
   return (
@@ -18,9 +25,9 @@ export default function HomeTab({ setActiveTab, myReports }) {
       <div className="bg-[#1F3864] text-white p-6 rounded-2xl shadow-md relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10"></div>
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold mb-2">Help improve your city.</h1>
+          <h1 className="text-2xl font-bold mb-2">Help improve your community.</h1>
           <p className="text-blue-100 text-sm md:text-base mb-6 leading-relaxed">
-            Report local issues easily. We will connect your problem with universities and partners who can fix it.
+            Report local civic, water, or infrastructure issues easily. We connect your problem with universities and partners who build real solutions.
           </p>
           <button 
             onClick={() => setActiveTab('submit')}
