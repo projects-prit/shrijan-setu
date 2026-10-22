@@ -4,10 +4,10 @@ import { Home, ArrowLeft, Users, Building2, Briefcase, Landmark, Compass } from 
 
 export default function NotFound() {
   const portalLinks = [
-    { label: 'Citizen Portal', path: '/login/citizen', icon: <Users size={16} /> },
-    { label: 'University Portal', path: '/login/hei', icon: <Building2 size={16} /> },
-    { label: 'Industry Portal', path: '/login/industry', icon: <Briefcase size={16} /> },
-    { label: 'Government Portal', path: '/login/government', icon: <Landmark size={16} /> },
+    { label: 'Citizen Portal', path: '/citizen', icon: <Users size={16} /> },
+    { label: 'University Portal', path: '/hei', icon: <Building2 size={16} /> },
+    { label: 'Industry Portal', path: '/industry', icon: <Briefcase size={16} /> },
+    { label: 'Government Portal', path: '/government', icon: <Landmark size={16} /> },
   ];
 
   return (

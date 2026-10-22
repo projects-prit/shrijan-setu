@@ -1,87 +1,89 @@
 import { useState, useContext } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Globe, User, Menu, X, LogOut } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Globe, User, Menu, X, LogOut, Sparkles } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
 
   // Helper to determine active route
-  const isActive = (path) => location.pathname.startsWith(path) && path !== '/' || location.pathname === path;
+  const isActive = (path) => (location.pathname.startsWith(path) && path !== '/') || location.pathname === path;
 
-  // We only show dashboard link if logged in
+  // Direct access navigation links for all portals
   const navLinks = [
     { name: 'Home', path: '/' },
+    { name: 'Citizen', path: '/citizen' },
+    { name: 'University', path: '/hei' },
+    { name: 'Industry', path: '/industry' },
+    { name: 'Government', path: '/government' },
+    { name: 'Admin', path: '/admin' }
   ];
-  
-  if (user?.role === 'citizen') navLinks.push({ name: 'My Dashboard', path: '/citizen' });
-  if (user?.role === 'hei_coordinator' || user?.role === 'hei_member') navLinks.push({ name: 'HEI Dashboard', path: '/hei' });
-  if (user?.role === 'industry') navLinks.push({ name: 'Industry Dashboard', path: '/industry' });
-  if (user?.role === 'government') navLinks.push({ name: 'Govt Dashboard', path: '/government' });
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
 
   return (
     <nav className="bg-[#1F3864] text-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center gap-6">
             <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#1F3864] font-bold text-xl">
+              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#1F3864] font-extrabold text-lg shadow-xs">
                 SS
               </div>
-              <span className="font-heading font-bold text-xl tracking-tight">SRIJAN SETU</span>
+              <span className="font-heading font-extrabold text-xl tracking-tight">SRIJAN SETU</span>
             </Link>
+
+            {/* Desktop Menu */}
+            <div className="hidden lg:flex lg:items-center lg:space-x-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    isActive(link.path)
+                      ? 'bg-white/20 text-white shadow-xs'
+                      : 'text-gray-200 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
           </div>
 
-          {/* Desktop Menu */}
           <div className="hidden md:flex md:items-center md:space-x-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive(link.path)
-                    ? 'bg-white/20 text-white'
-                    : 'text-gray-200 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </div>
+            <div className="flex items-center gap-1.5 bg-blue-900/60 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-semibold text-blue-100">
+              <Sparkles size={13} className="text-[#C55A11]" />
+              <span>AI Engine Active</span>
+            </div>
 
-          <div className="hidden md:flex md:items-center md:space-x-4">
-            <button className="flex items-center gap-1 text-sm font-medium text-gray-200 hover:text-white transition-colors">
-              <Globe size={18} />
-              <span>EN ▾</span>
+            <button className="flex items-center gap-1 text-xs font-medium text-gray-200 hover:text-white transition-colors">
+              <Globe size={16} />
+              <span>JH (EN/HI)</span>
             </button>
-            <div className="h-6 w-px bg-white/20"></div>
+            <div className="h-5 w-px bg-white/20"></div>
             
             {user ? (
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-blue-200">{user.email}</span>
-                <button onClick={handleLogout} className="flex items-center gap-2 text-sm font-medium bg-red-500/20 text-red-100 px-3 py-2 rounded-md hover:bg-red-500/40 transition-colors">
-                  <LogOut size={18} />
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-blue-200 truncate max-w-[150px]">{user.email}</span>
+                <button 
+                  onClick={() => logout && logout()} 
+                  className="flex items-center gap-1.5 text-xs font-medium bg-red-500/20 text-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500/40 transition-colors"
+                >
+                  <LogOut size={14} />
                   <span>Logout</span>
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="flex items-center gap-2 text-sm font-medium bg-white text-[#1F3864] px-4 py-2 rounded-md hover:bg-gray-100 transition-colors">
-                <User size={18} />
+              <Link to="/login" className="flex items-center gap-1.5 text-xs font-bold bg-white text-[#1F3864] px-3.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors shadow-xs">
+                <User size={15} />
                 <span>Login</span>
               </Link>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="flex items-center md:hidden">
+          <div className="flex items-center lg:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-200 hover:text-white hover:bg-white/10 focus:outline-none"
@@ -94,13 +96,13 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#1a2f55] pb-3 px-2 pt-2 space-y-1 shadow-inner">
+        <div className="lg:hidden bg-[#152746] pb-3 px-3 pt-2 space-y-1 shadow-inner border-t border-white/10">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-md text-base font-medium ${
+              className={`block px-3 py-2 rounded-lg text-sm font-semibold ${
                 isActive(link.path)
                   ? 'bg-white/20 text-white'
                   : 'text-gray-200 hover:bg-white/10 hover:text-white'
@@ -109,25 +111,17 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          <div className="pt-4 pb-2 border-t border-white/10 mt-2">
-            <div className="flex items-center justify-around">
-              <button className="flex items-center gap-1 text-sm font-medium text-gray-200 hover:text-white">
-                <Globe size={18} />
-                <span>EN</span>
+          <div className="pt-3 pb-2 border-t border-white/10 mt-2 flex items-center justify-between px-2">
+            <span className="text-xs text-blue-200">Jharkhand State Platform</span>
+            {user ? (
+              <button onClick={() => logout && logout()} className="text-xs text-red-300 font-semibold flex items-center gap-1">
+                <LogOut size={14} /> Logout
               </button>
-              
-              {user ? (
-                <button onClick={handleLogout} className="flex items-center gap-2 text-sm font-medium text-red-300 hover:text-red-100">
-                  <LogOut size={18} />
-                  <span>Logout</span>
-                </button>
-              ) : (
-                <Link to="/login" className="flex items-center gap-2 text-sm font-medium text-gray-200 hover:text-white">
-                  <User size={18} />
-                  <span>Login</span>
-                </Link>
-              )}
-            </div>
+            ) : (
+              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-xs text-white font-bold bg-white/20 px-3 py-1 rounded">
+                Login
+              </Link>
+            )}
           </div>
         </div>
       )}

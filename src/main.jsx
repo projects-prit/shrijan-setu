@@ -2,8 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import PublicRoute from './components/PublicRoute';
 import MainLayout from './components/layout/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage';
@@ -28,70 +26,58 @@ createRoot(document.getElementById('root')).render(
               <Route index element={<LandingPage />} />
             </Route>
 
-            {/* Auth Routes - Redirects to dashboard if already logged in */}
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<Login />} />
-              <Route path="/login/:role" element={<Login />} />
-            </Route>
+            {/* Direct Dashboard Access - All login restrictions removed per request */}
+            <Route 
+              path="/citizen/*" 
+              element={
+                <ErrorBoundary>
+                  <CitizenDashboard />
+                </ErrorBoundary>
+              } 
+            />
+            
+            <Route 
+              path="/hei/*" 
+              element={
+                <ErrorBoundary>
+                  <HEIDashboard />
+                </ErrorBoundary>
+              } 
+            />
+            
+            <Route 
+              path="/industry/*" 
+              element={
+                <ErrorBoundary>
+                  <IndustryDashboard />
+                </ErrorBoundary>
+              } 
+            />
+            
+            <Route 
+              path="/government/*" 
+              element={
+                <ErrorBoundary>
+                  <GovernmentDashboard />
+                </ErrorBoundary>
+              } 
+            />
+            
+            <Route 
+              path="/admin/*" 
+              element={
+                <ErrorBoundary>
+                  <AdminDashboard />
+                </ErrorBoundary>
+              } 
+            />
 
-            {/* Access control pages */}
+            {/* Login Routes - Available as optional utilities */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/login/:role" element={<Login />} />
+
+            {/* Status pages */}
             <Route path="/unauthorized" element={<Unauthorized />} />
-
-            {/* Protected Dashboards */}
-            <Route element={<ProtectedRoute allowedRoles={['citizen']} />}>
-              <Route 
-                path="/citizen/*" 
-                element={
-                  <ErrorBoundary>
-                    <CitizenDashboard />
-                  </ErrorBoundary>
-                } 
-              />
-            </Route>
-            
-            <Route element={<ProtectedRoute allowedRoles={['hei_coordinator', 'hei_member']} />}>
-              <Route 
-                path="/hei/*" 
-                element={
-                  <ErrorBoundary>
-                    <HEIDashboard />
-                  </ErrorBoundary>
-                } 
-              />
-            </Route>
-            
-            <Route element={<ProtectedRoute allowedRoles={['industry']} />}>
-              <Route 
-                path="/industry/*" 
-                element={
-                  <ErrorBoundary>
-                    <IndustryDashboard />
-                  </ErrorBoundary>
-                } 
-              />
-            </Route>
-            
-            <Route element={<ProtectedRoute allowedRoles={['government']} />}>
-              <Route 
-                path="/government/*" 
-                element={
-                  <ErrorBoundary>
-                    <GovernmentDashboard />
-                  </ErrorBoundary>
-                } 
-              />
-            </Route>
-            
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route 
-                path="/admin/*" 
-                element={
-                  <ErrorBoundary>
-                    <AdminDashboard />
-                  </ErrorBoundary>
-                } 
-              />
-            </Route>
 
             {/* Catch-all 404 Route */}
             <Route path="*" element={<NotFound />} />

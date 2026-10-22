@@ -47,15 +47,19 @@ const ChallengeSchema = new mongoose.Schema({
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
-      required: true
+      default: [85.3096, 23.3441] // Default coordinates (Ranchi, Jharkhand)
     }
+  },
+  address: {
+    type: String,
+    default: ''
   },
   district: {
     type: String,
-    required: true
+    default: 'Khunti'
   },
   media: {
-    type: [String], // URLs to S3
+    type: [String],
     default: []
   },
   status: {
@@ -67,6 +71,13 @@ const ChallengeSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Challenge',
     default: null
+  },
+  ai_verification: {
+    verified: { type: Boolean, default: false },
+    confidence_score: { type: Number, default: 0 },
+    category_detected: { type: String, default: '' },
+    summary: { type: String, default: '' },
+    moderation_status: { type: String, default: 'approved' }
   },
   matched_institutions: [MatchedInstitutionSchema]
 }, {

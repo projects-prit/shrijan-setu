@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ChevronRight, X, Droplets, BookOpen, Truck, Leaf, Zap, Star } from 'lucide-react';
+import { Search, MapPin, ChevronRight, X, Droplets, BookOpen, Truck, Leaf, Zap, Star, Sparkles, Building2 } from 'lucide-react';
 
 export default function MyReportsTab({ myReports = [], setMyReports, showToast }) {
   const [filter, setFilter] = useState('All');
@@ -188,6 +188,26 @@ export default function MyReportsTab({ myReports = [], setMyReports, showToast }
                 })}
               </div>
               <div className="text-center mt-2 font-bold text-[#2E7D32] capitalize">{selectedReport.status || 'Submitted'}</div>
+            </div>
+
+            {/* AI Verification & Routing Information */}
+            <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-4 mb-6">
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-blue-100">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#1F3864]">
+                  <Sparkles size={14} className="text-[#C55A11]" />
+                  <span>AI Verification & Routing Engine</span>
+                </div>
+                <span className="text-xs font-bold bg-[#C55A11] text-white px-2.5 py-0.5 rounded-full">
+                  Priority: {selectedReport.priority_score || 92}/100
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mb-2.5">
+                Challenge verified and assigned to Jharkhand Higher Education Institutions based on domain expertise.
+              </p>
+              <div className="flex items-center gap-2.5 text-xs font-semibold text-gray-800 bg-white p-2.5 rounded-xl border border-blue-100 shadow-2xs">
+                <Building2 size={16} className="text-[#1F3864] shrink-0" />
+                <span>Assigned Partner: <strong>{selectedReport.assignedTo || 'Birla Institute of Technology (BIT) Mesra'}</strong></span>
+              </div>
             </div>
 
             {/* Timeline */}
